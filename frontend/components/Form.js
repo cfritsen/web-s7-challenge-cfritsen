@@ -32,7 +32,7 @@ export default function Form() {
     size: '',
     toppings: []
   })
-  const [error, setError] = useState({
+  const [errors, setErrors] = useState({
     fullName: '',
     size: ''
   })
@@ -57,6 +57,14 @@ export default function Form() {
       } else {setForm({...form, toppings: form.toppings.filter(num => num !== value)})}
     }
     else setForm({...form, [id]: value})
+
+    yup.reach(formSchema, id).validate(value)
+      .then(() => {
+        setErrors({...errors, [id]: ''})
+      })
+      .catch((err) => {
+        setErrors({...errors, [id]: err.errors[0]})
+      })
   }
 
   //Validation on form Submit
@@ -67,7 +75,7 @@ export default function Form() {
     formSchema.isValid(form).then(() => {
       axios.post('http://localhost:9009/api/order', form)
         .then(result => {
-          setSuccess(result.data)
+          setSuccess(result.data.message)
           setFailure('')
           setForm({
             fullName: '',
@@ -77,39 +85,38 @@ export default function Form() {
         })
         .catch(err => {
           setSuccess('')
-          setFailure(err.data)
+          setFailure(err.data.message)
         })
-      setDisableSubmit(!isValid)
     })
   }
 
 
   return (
-    <form onChange={changeHandler}>
+    <form onChange={changeHandler} onSubmit={submitHandler}>
       <h2>Order Your Pizza</h2>
-      {success && <div className='success'>Thank you for your order!</div>}
-      {failure && <div className='failure'>Something went wrong</div>}
+      {success && <div className='success'>{success}</div>}
+      {failure && <div className='failure'>{failure}</div>}
 
       <div className="input-group">
         <div>
           <label htmlFor="fullName">Full Name</label><br />
-          <input placeholder="Type full name" id="fullName" type="text" value={form.fullName} />
+          <input placeholder="Type full name" id="fullName" type="text" onChange={() => {}}value={form.fullName} />
         </div>
-        {true && <div className='error'>Bad value</div>}
+        {true && <div className='error'>{errors.fullName}</div>}
       </div>
 
       <div className="input-group">
         <div>
           <label htmlFor="size">Size</label><br />
-          <select id="size" value={form.size}>
+          <select id="size" readOnly={true} value={form.size}>
             <option value="">----Choose Size----</option>
             {/* Fill out the missing options */}
-            <option value="S">S</option>
-            <option value="M">M</option>
-            <option value="L">L</option>
+            <option value="S">Small</option>
+            <option value="M">Medium</option>
+            <option value="L">Large</option>
           </select>
         </div>
-        {true && <div className='error'>Bad value</div>}
+        {true && <div className='error'>{errors.size}</div>}
       </div>
 
       <div className="input-group">
@@ -119,13 +126,14 @@ export default function Form() {
           <input
             name={topping.text}
             type="checkbox"
+            readOnly={true}
             value={topping.topping_id}
             checked={form.toppings.includes(topping.topping_id)}
           />{topping.text}
         </label>)})}
       </div>
       {/* 👇 Make sure the submit stays disabled until the form validates! */}
-      <input type="submit" disabled={disableSubmit} onSubmit={submitHandler} />
+      <input type="submit" disabled={disableSubmit} />
     </form>
   )
 }
