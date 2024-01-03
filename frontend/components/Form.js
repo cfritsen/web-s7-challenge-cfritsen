@@ -56,7 +56,7 @@ export default function Form() {
         setForm({...form, toppings: [...form.toppings, value]})
       } else {setForm({...form, toppings: form.toppings.filter(num => num !== value)})}
     }
-    else setForm({...form, [id]: value})
+    else setForm({...form, [id]: value.trim()})
 
     yup.reach(formSchema, id).validate(value)
       .then(() => {
