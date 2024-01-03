@@ -11,7 +11,7 @@ const validationErrors = {
 
 // 👇 Here you will create your schema.
 const formSchema = yup.object().shape({
-  fullName: yup.string().min(3, validationErrors.fullNameTooShort).max(20, validationErrors.fullNameTooLong).required(),
+  fullName: yup.string().min(3, validationErrors.fullNameTooShort).max(20, validationErrors.fullNameTooLong).trim().required(),
   size: yup.string().oneOf(['S', 'M', 'L'], validationErrors.sizeIncorrect).required(),
   toppings: yup.array().of(yup.lazy(value => typeof value === 'number' ? yup.number().oneOf([1,2,3,4,5]) : yup.string().oneOf(['1','2','3','4','5']))).max(5)
 })
@@ -45,26 +45,56 @@ export default function Form() {
     formSchema.isValid(form).then(isValid => {
       setDisableSubmit(!isValid)
     })
-  },[form])
+  },[form.fullName, form.size])
 
   //Updates and validates form dynamically
+  // const changeHandler = evt => {
+  //   const {type, value, id, checked} = evt.target;
+
+  //   if (type === 'checkbox'){
+  //     if (checked){
+  //       setForm({...form, toppings: [...form.toppings, value]})
+  //     } else {setForm({...form, toppings: form.toppings.filter(num => num !== value)})}
+  //   }
+  //   else setForm({...form, [id]: value.trim()})
+
+  //   yup.reach(formSchema, id).validate(value)
+  //     .then(() => {
+  //       setErrors({...errors, [id]: ''})
+  //     })
+  //     .catch((err) => {
+  //       setErrors({...errors, [id]: err.errors[0]})
+  //     })
+  // }
+
+  const validate = (key, value) => {
+    yup
+    .reach(formSchema, key)
+    .validate(value)
+    .then(() => {
+      setErrors({...errors, [key]: ''})
+    })
+    .catch((err) => {
+      setErrors({...errors, [key]: err.errors[0]})
+    })
+  }
+
   const changeHandler = evt => {
-    const {type, value, id, checked} = evt.target;
+    const {value, id} = evt.target;
 
-    if (type === 'checkbox'){
-      if (checked){
-        setForm({...form, toppings: [...form.toppings, value]})
-      } else {setForm({...form, toppings: form.toppings.filter(num => num !== value)})}
+    validate(id, value)
+    setForm({...form, [id]: value})
+  }
+
+  const toppingHandler = evt => {
+    const {checked, value} = evt.target;
+
+    if (checked){
+      setForm({...form, toppings: [...form.toppings, value]})
+    } else {
+      setForm({...form, toppings: form.toppings.filter(num => num !== value)})
     }
-    else setForm({...form, [id]: value.trim()})
-
-    yup.reach(formSchema, id).validate(value)
-      .then(() => {
-        setErrors({...errors, [id]: ''})
-      })
-      .catch((err) => {
-        setErrors({...errors, [id]: err.errors[0]})
-      })
+    
   }
 
   //Validation on form Submit
@@ -92,7 +122,7 @@ export default function Form() {
 
 
   return (
-    <form onChange={changeHandler} onSubmit={submitHandler}>
+    <form onSubmit={submitHandler}>
       <h2>Order Your Pizza</h2>
       {success && <div className='success'>{success}</div>}
       {failure && <div className='failure'>{failure}</div>}
@@ -100,7 +130,7 @@ export default function Form() {
       <div className="input-group">
         <div>
           <label htmlFor="fullName">Full Name</label><br />
-          <input placeholder="Type full name" id="fullName" type="text" onChange={() => {}}value={form.fullName} />
+          <input placeholder="Type full name" id="fullName" type="text" onChange={changeHandler} value={form.fullName} />
         </div>
         {true && <div className='error'>{errors.fullName}</div>}
       </div>
@@ -108,7 +138,7 @@ export default function Form() {
       <div className="input-group">
         <div>
           <label htmlFor="size">Size</label><br />
-          <select id="size" readOnly={true} value={form.size}>
+          <select id="size" readOnly={true} onChange={changeHandler} value={form.size}>
             <option value="">----Choose Size----</option>
             {/* Fill out the missing options */}
             <option value="S">Small</option>
@@ -128,6 +158,7 @@ export default function Form() {
             type="checkbox"
             readOnly={true}
             value={topping.topping_id}
+            onChange={toppingHandler}
             checked={form.toppings.includes(topping.topping_id)}
           />{topping.text}
         </label>)})}
