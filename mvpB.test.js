@@ -15,10 +15,10 @@ describe('Sprint 7 Challenge Learner Tests', () => {
     [5] sum('10', '3') // returns 13
   */
   test("sum throws error with no input", () => {
-    expect(sum()).toBe('pass valid numbers');
+    expect(() => sum()).toThrow('pass valid numbers');
   })
   test("sum throws error when presented with non-number", () => {
-    expect(sum(2, 'seven')).toBe('pass valid numbers');
+    expect(() => sum(2, 'seven')).toThrow('pass valid numbers');
   })
   test("sum adds numbers together", () => {
     expect(sum(1, 3)).toBe(4);
